@@ -1,6 +1,6 @@
 <script>
 	let videoSource = null;
-	let base_url = 'http://63.135.50.11:5055';
+	let base_url = 'http://171.248.247.140:56192';
 	let image_url = '';
 	let overlay_url = '';
 	let showImageOverlay = false;
@@ -8,6 +8,7 @@
 	let isCameraOn = false;
 	let isFinished = false;
 	let gender = 'male';
+	let prompt = "";
 
 	async function generateQRCode(data) {
 		let qrGeneratorUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=' + data;
@@ -59,7 +60,7 @@
 
 			let formData = new FormData();
 			formData.append('raw_image', file);
-			const response = await fetch(base_url + '/image?is_boy='+gender, {
+			const response = await fetch(base_url + '/image?is_boy='+gender+"&prompt="+prompt, {
 				method: 'POST',
 				body: formData
 			});
@@ -146,9 +147,12 @@
 		</span>{' '}
 		Reality
 	</h1>
-	<p class="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
-		Click take picture to get preview and transform to alternative reality
-	</p>
+	<input
+		bind:value={prompt}
+		class="mx-auto my-5 w-[400px] bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+		type="text"
+		placeholder="What's do you want to become."
+	/>
 	<div class="mt-10 flex-col justify-center gap-x-6">
 		<button
 			on:click={takePicture}
