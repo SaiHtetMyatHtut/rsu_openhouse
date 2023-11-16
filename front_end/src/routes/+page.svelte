@@ -29,7 +29,8 @@
 			} else {
 				isCameraOn = true;
 				const stream = await navigator.mediaDevices.getUserMedia({
-					video: { facingMode: { exact: 'environment' }, width: 512, height: 512 }
+					video: { facingMode: 'environment' },
+					audio: false
 				});
 				videoSource.srcObject = stream;
 				videoSource.style.transform = 'scaleX(-1)'; // This line flips the video horizontally
@@ -58,8 +59,7 @@
 
 			let formData = new FormData();
 			formData.append('raw_image', file);
-			formData.append('isboy', gender == 'male' ? 'true' : 'false');
-			const response = await fetch(base_url + '/image', {
+			const response = await fetch(base_url + '/image?is_boy='+gender, {
 				method: 'POST',
 				body: formData
 			});
