@@ -1,15 +1,16 @@
 <script>
 	let videoSource = null;
-	let base_url = 'http://83.219.197.235:40175';
-	let image_url = "";
-	let overlay_url = "";
+	let base_url = 'http://63.135.50.11:5055';
+	let image_url = '';
+	let overlay_url = '';
 	let showImageOverlay = false;
 	let isLoading = false;
 	let isCameraOn = false;
 	let isFinished = false;
+	let gender = 'male';
 
 	async function generateQRCode(data) {
-		let qrGeneratorUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data='+data;
+		let qrGeneratorUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=' + data;
 		let qrCodeImageUrl = qrGeneratorUrl;
 		const response = await fetch(qrCodeImageUrl);
 		if (response.status !== 200) {
@@ -57,6 +58,7 @@
 
 			let formData = new FormData();
 			formData.append('raw_image', file);
+			formData.append('isboy', gender == 'male' ? 'true' : 'false');
 			const response = await fetch(base_url + '/image', {
 				method: 'POST',
 				body: formData
@@ -104,28 +106,28 @@
 			muted
 			style="transform: scaleX(-1);"
 		/>
+	{:else if !image_url}
+		<img
+			class="w-80 h-80 rounded-md"
+			alt=""
+			src="https://media.tenor.com/7UDr7ANLiSEAAAAd/cats-kitty.gif"
+			autoplay
+		/>
 	{:else}
-		{#if !image_url}
-			<img
-				class="w-80 h-80 rounded-md"
-				alt=""
-				src="https://media.tenor.com/7UDr7ANLiSEAAAAd/cats-kitty.gif"
-				autoplay
-			/>
-		{:else}
-			{#if showImageOverlay}
-				<div class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-80 z-50 rounded-md">
-					<img class="max-w-full max-h-full rounded-md" src="{overlay_url}" alt="overlay"/>
-				</div>
-			{/if}
-			<img
-				class="w-80 h-80 rounded-md"
-				src="{image_url}"
-				alt="original"
-				autoplay
-				on:click={() => showImageOverlay = true}
-			/>
+		{#if showImageOverlay}
+			<div
+				class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-80 z-50 rounded-md"
+			>
+				<img class="max-w-full max-h-full rounded-md" src={overlay_url} alt="overlay" />
+			</div>
 		{/if}
+		<img
+			class="w-80 h-80 rounded-md"
+			src={image_url}
+			alt="original"
+			autoplay
+			on:click={() => (showImageOverlay = true)}
+		/>
 	{/if}
 </div>
 <div class="pb-10 pt-20 text-center">
@@ -147,7 +149,7 @@
 	<p class="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
 		Click take picture to get preview and transform to alternative reality
 	</p>
-	<div class="mt-10 flex justify-center gap-x-6">
+	<div class="mt-10 flex-col justify-center gap-x-6">
 		<button
 			on:click={takePicture}
 			class="group inline-flex items-center justify-center rounded-full py-2 px-4 text-sm font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 bg-blue-600 text-white hover:text-slate-100 hover:bg-blue-500 active:bg-blue-800 active:text-blue-100 focus-visible:outline-blue-600"
@@ -165,5 +167,23 @@
 			</svg>
 			<span class="ml-3">Preview</span>
 		</button>
+		<div class="mt-5 flex justify-center gap-x-6">
+			<button
+				on:click={() => (gender = 'male')}
+				class={`group inline-flex items-center justify-center rounded-full py-2 px-4 text-sm font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 ${
+					gender === 'male' ? 'bg-red-600 text-white' : 'text-slate-700'
+				}  hover:text-slate-100 hover:bg-slate-500 active:bg-slate-800 active:text-blue-100 focus-visible:outline-blue-600`}
+			>
+				Male
+			</button>
+			<button
+				on:click={() => (gender = 'female')}
+				class={`group inline-flex items-center justify-center rounded-full py-2 px-4 text-sm font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 ${
+					gender === 'female' ? 'bg-red-600 text-white' : 'text-slate-700'
+				}  hover:text-slate-100 hover:bg-slate-500 active:bg-slate-800 active:text-blue-100 focus-visible:outline-blue-600`}
+			>
+				Female
+			</button>
+		</div>
 	</div>
 </div>
