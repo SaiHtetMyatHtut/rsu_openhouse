@@ -1,15 +1,34 @@
 <script>
 	let videoSource = null;
-    let base_url = "https://b155-34-125-52-110.ngrok-free.app"
-    let image;
+	let base_url = 'http://83.219.197.235:40175';
+	let image_url = "";
+	let overlay_url = "";
+	let showImageOverlay = false;
+	let isLoading = false;
+	let isCameraOn = false;
+	let isFinished = false;
+
+	async function generateQRCode(data) {
+		let qrGeneratorUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data='+data;
+		let qrCodeImageUrl = qrGeneratorUrl;
+		const response = await fetch(qrCodeImageUrl);
+		if (response.status !== 200) {
+			throw new Error('Network response was not ok');
+		}
+		const blob = await response.blob();
+		overlay_url = URL.createObjectURL(blob);
+	}
+
 	const toggleCamera = async () => {
 		try {
-			if (videoSource.srcObject) {
+			if (videoSource && videoSource.srcObject) {
+				isCameraOn = false;
 				videoSource.srcObject.getTracks().forEach((track) => track.stop());
 				videoSource.srcObject = null;
 			} else {
+				isCameraOn = true;
 				const stream = await navigator.mediaDevices.getUserMedia({
-					video: { facingMode: { exact: 'environment' }, width: 500, height: 500 }
+					video: { facingMode: { exact: 'environment' }, width: 512, height: 512 }
 				});
 				videoSource.srcObject = stream;
 				videoSource.style.transform = 'scaleX(-1)'; // This line flips the video horizontally
@@ -22,6 +41,8 @@
 
 	const takePicture = async () => {
 		try {
+			isLoading = true;
+
 			const canvas = document.createElement('canvas');
 			canvas.width = videoSource.videoWidth;
 			canvas.height = videoSource.videoHeight;
@@ -35,36 +56,77 @@
 			toggleCamera();
 
 			let formData = new FormData();
-			formData.append('image', file);
-			const response = await fetch(base_url+'/image', {
+			formData.append('raw_image', file);
+			const response = await fetch(base_url + '/image', {
 				method: 'POST',
 				body: formData
 			});
 			if (response.status !== 200) {
 				throw new Error('Network response was not ok');
 			}
-            let data = await response.json();
+			let data = await response.json();
 			console.log(data.file_name);
-            
-            const imageResponse = await fetch(base_url+"/get/"+data.file_name);
-            if (imageResponse.status !== 200) {
-                throw new Error('Network response was not ok');
-            }
-            console.log(imageResponse);
-            image.src = await imageResponse.url;
 
+			const imageResponse = await fetch(base_url + '/get/' + data.file_name);
+			if (imageResponse.status !== 200) {
+				throw new Error('Network response was not ok');
+			}
+			console.log(imageResponse);
+			image_url = await imageResponse.url;
+			generateQRCode(image_url);
+			// image.src = image_url
+			isFinished = true;
 		} catch (error) {
 			console.log(error);
+		} finally {
+			isLoading = false;
 		}
 	};
 </script>
 
 <header class="h-28 w-screen" />
 <div class="w-screen h-80 flex justify-center pt-10">
-	<video class="w-80 h-80" bind:this={videoSource}>
-		<track kind="captions" />
-	</video>
-    <img  bind:this={image} alt="">
+	{#if isLoading && !isCameraOn}
+		<div class="w-80 h-80 flex items-center justify-center">
+			<div class="relative m-auto">
+				<div class="h-24 w-24 rounded-full border-t-8 border-b-8 border-gray-200" />
+				<div
+					class="absolute top-0 left-0 h-24 w-24 rounded-full border-t-8 border-b-8 border-blue-500 animate-spin"
+				/>
+			</div>
+		</div>
+	{:else if isCameraOn}
+		<video
+			bind:this={videoSource}
+			class="w-80 h-80"
+			autoplay
+			playsinline
+			muted
+			style="transform: scaleX(-1);"
+		/>
+	{:else}
+		{#if !image_url}
+			<img
+				class="w-80 h-80 rounded-md"
+				alt=""
+				src="https://media.tenor.com/7UDr7ANLiSEAAAAd/cats-kitty.gif"
+				autoplay
+			/>
+		{:else}
+			{#if showImageOverlay}
+				<div class="fixed top-0 left-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-80 z-50 rounded-md">
+					<img class="max-w-full max-h-full rounded-md" src="{overlay_url}" alt="overlay"/>
+				</div>
+			{/if}
+			<img
+				class="w-80 h-80 rounded-md"
+				src="{image_url}"
+				alt="original"
+				autoplay
+				on:click={() => showImageOverlay = true}
+			/>
+		{/if}
+	{/if}
 </div>
 <div class="pb-10 pt-20 text-center">
 	<h1
